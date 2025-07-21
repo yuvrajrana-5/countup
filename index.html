@@ -120,6 +120,8 @@
       seconds = 0;
       timerDisplay.textContent = formatTime(seconds);
       isRunning = false;
+      startBtn.style.display = "inline-block";
+
     }
 
     function startWithCustomTime() {
@@ -134,6 +136,8 @@
 
       seconds = hrs * 3600 + mins * 60 + secs;
       timerDisplay.textContent = formatTime(seconds);
+      startBtn.style.display = "none";
+
       toggleTimer(); // starts the timer
     }
 
