@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>48 Hour Countup Timer</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #121212;
+      color: #00ffcc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    #timer {
+      font-size: 4em;
+      cursor: pointer;
+      user-select: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="timer">00:00:00</div>
+
+  <script>
+    let seconds = 0;
+    let isRunning = false;
+    let interval = null;
+    const maxSeconds = 172800;
+    const timerDisplay = document.getElementById('timer');
+
+    function formatTime(secs) {
+      const hrs = String(Math.floor(secs / 3600)).padStart(2, '0');
+      const mins = String(Math.floor((secs % 3600) / 60)).padStart(2, '0');
+      const secsFinal = String(secs % 60).padStart(2, '0');
+      return `${hrs}:${mins}:${secsFinal}`;
+    }
+
+    function updateTimer() {
+      if (seconds >= maxSeconds) {
+        clearInterval(interval);
+        isRunning = false;
+        return;
+      }
+      seconds++;
+      timerDisplay.textContent = formatTime(seconds);
+    }
+
+    function toggleTimer() {
+      if (isRunning) {
+        clearInterval(interval);
+      } else {
+        interval = setInterval(updateTimer, 1000);
+      }
+      isRunning = !isRunning;
+    }
+
+    timerDisplay.addEventListener('click', toggleTimer);
+    timerDisplay.addEventListener('touchstart', toggleTimer);
+  </script>
+</body>
+</html>
