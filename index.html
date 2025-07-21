@@ -5,24 +5,80 @@
   <title>48 Hour Countup Timer</title>
   <style>
     body {
-      font-family: sans-serif;
-      background: #000000;
-      color: #ffffff;
+      font-family: 'Segoe UI', sans-serif;
+      background: #1a1a1a;
+      color: #00ffc8;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       height: 100vh;
       margin: 0;
+      padding: 20px;
     }
+
     #timer {
       font-size: 4em;
       cursor: pointer;
       user-select: none;
+      margin-bottom: 20px;
+      touch-action: manipulation;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    input, button {
+      padding: 10px;
+      font-size: 1em;
+      border: none;
+      border-radius: 6px;
+    }
+
+    input {
+      width: 60px;
+      text-align: center;
+    }
+
+    button {
+      background: #00ffc8;
+      color: #1a1a1a;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #00d6aa;
+    }
+
+    @media (max-width: 600px) {
+      #timer {
+        font-size: 3em;
+      }
+
+      input, button {
+        font-size: 0.9em;
+        padding: 8px;
+      }
     }
   </style>
 </head>
 <body>
+
   <div id="timer">00:00:00</div>
+
+  <div class="controls">
+    <input type="number" id="hours" placeholder="HH" min="0">
+    <input type="number" id="minutes" placeholder="MM" min="0" max="59">
+    <input type="number" id="secondsInput" placeholder="SS" min="0" max="59">
+    <button id="startTimerBtn">Start</button>
+    <button id="resetBtn">Reset</button>
+  </div>
+
+  <small style="color:#ccc;">Tap the time to pause/resume</small>
 
   <script>
     let seconds = 0;
@@ -30,6 +86,8 @@
     let interval = null;
     const maxSeconds = 172800;
     const timerDisplay = document.getElementById('timer');
+    const resetBtn = document.getElementById('resetBtn');
+    const startBtn = document.getElementById('startTimerBtn');
 
     function formatTime(secs) {
       const hrs = String(Math.floor(secs / 3600)).padStart(2, '0');
@@ -57,8 +115,34 @@
       isRunning = !isRunning;
     }
 
+    function resetTimer() {
+      clearInterval(interval);
+      seconds = 0;
+      timerDisplay.textContent = formatTime(seconds);
+      isRunning = false;
+    }
+
+    function startWithCustomTime() {
+      if (isRunning) {
+        clearInterval(interval);
+        isRunning = false;
+      }
+
+      const hrs = parseInt(document.getElementById('hours').value) || 0;
+      const mins = parseInt(document.getElementById('minutes').value) || 0;
+      const secs = parseInt(document.getElementById('secondsInput').value) || 0;
+
+      seconds = hrs * 3600 + mins * 60 + secs;
+      timerDisplay.textContent = formatTime(seconds);
+      toggleTimer(); // starts the timer
+    }
+
     timerDisplay.addEventListener('click', toggleTimer);
     timerDisplay.addEventListener('touchstart', toggleTimer);
+    resetBtn.addEventListener('click', resetTimer);
+    resetBtn.addEventListener('touchstart', resetTimer);
+    startBtn.addEventListener('click', startWithCustomTime);
+    startBtn.addEventListener('touchstart', startWithCustomTime);
   </script>
   <script defer src="https://dagammla.gitlab.io/keep-silk-open/keep.js">
 </script>
