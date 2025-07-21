@@ -18,29 +18,35 @@
     }
 
     #timer {
-      font-size: 4em;
+      font-size: 5em;
       cursor: pointer;
       user-select: none;
-      margin-bottom: 20px;
+      margin-bottom: 30px;
       touch-action: manipulation;
+      transition: opacity 0.2s ease;
     }
 
-    .controls {
+    .control-panel {
       display: flex;
+      flex-wrap: wrap;
       gap: 10px;
       margin-bottom: 20px;
+      justify-content: center;
     }
 
     input, button {
-      padding: 10px;
-      font-size: 1em;
+      padding: 12px;
+      font-size: 1.2em;
       border: none;
       border-radius: 6px;
     }
 
     input {
-      width: 60px;
+      width: 70px;
       text-align: center;
+      background: #121212;
+      color: #00ffc8;
+      border: 1px solid #00ffc8;
     }
 
     button {
@@ -54,14 +60,25 @@
       background: #00d6aa;
     }
 
+    small {
+      color: #ccc;
+      margin-top: 10px;
+    }
+
     @media (max-width: 600px) {
       #timer {
-        font-size: 3em;
+        font-size: 4em;
       }
 
       input, button {
-        font-size: 0.9em;
-        padding: 8px;
+        font-size: 1em;
+        padding: 10px;
+        width: 60px;
+      }
+
+      .control-panel {
+        flex-direction: column;
+        align-items: center;
       }
     }
   </style>
@@ -70,15 +87,15 @@
 
   <div id="timer">00:00:00</div>
 
-  <div class="controls">
+  <div class="control-panel">
     <input type="number" id="hours" placeholder="HH" min="0">
     <input type="number" id="minutes" placeholder="MM" min="0" max="59">
     <input type="number" id="secondsInput" placeholder="SS" min="0" max="59">
     <button id="startTimerBtn">Start</button>
-    <button id="resetBtn">Reset</button>
   </div>
 
-  <small style="color:#ccc;">Tap the time to pause/resume</small>
+  <button id="resetBtn">Reset</button>
+  <small id="helperText">Tap the time to pause/resume</small>
 
   <script>
     let seconds = 0;
@@ -88,6 +105,8 @@
     const timerDisplay = document.getElementById('timer');
     const resetBtn = document.getElementById('resetBtn');
     const startBtn = document.getElementById('startTimerBtn');
+    const helperText = document.getElementById('helperText');
+    const controlPanel = document.querySelector('.control-panel');
 
     function formatTime(secs) {
       const hrs = String(Math.floor(secs / 3600)).padStart(2, '0');
@@ -104,6 +123,8 @@
       }
       seconds++;
       timerDisplay.textContent = formatTime(seconds);
+      timerDisplay.style.opacity = 0.6;
+      setTimeout(() => { timerDisplay.style.opacity = 1; }, 100);
     }
 
     function toggleTimer() {
@@ -120,8 +141,9 @@
       seconds = 0;
       timerDisplay.textContent = formatTime(seconds);
       isRunning = false;
-      startBtn.style.display = "inline-block";
 
+      controlPanel.style.display = 'flex';
+      helperText.style.display = 'block';
     }
 
     function startWithCustomTime() {
@@ -136,9 +158,11 @@
 
       seconds = hrs * 3600 + mins * 60 + secs;
       timerDisplay.textContent = formatTime(seconds);
-      startBtn.style.display = "none";
 
-      toggleTimer(); // starts the timer
+      controlPanel.style.display = 'none';
+      helperText.style.display = 'none';
+
+      toggleTimer(); // start countup
     }
 
     timerDisplay.addEventListener('click', toggleTimer);
@@ -153,3 +177,4 @@
 
 </body>
 </html>
+
