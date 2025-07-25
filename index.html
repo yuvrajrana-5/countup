@@ -3,22 +3,44 @@
 <head>
   <title>Study Timer</title>
   <style>
-    body { font-family: sans-serif; text-align: center; margin: 2em; }
-    #timer { font-size: 3em; margin: 1em 0; }
-    button, input { font-size: 1em; margin: 0.5em; padding: 0.4em 1em; }
-    #history { margin-top: 2em; text-align: left; max-width: 400px; margin: 2em auto; }
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      margin: 2em;
+    }
+    #timer {
+      font-size: 3em;
+      margin: 1em 0;
+    }
+    button, input {
+      font-size: 1em;
+      margin: 0.5em;
+      padding: 0.4em 1em;
+    }
+    #history {
+      margin-top: 2em;
+      text-align: left;
+      max-width: 400px;
+      margin: 2em auto;
+    }
+    .auth-box {
+      border: 1px solid #ccc;
+      padding: 1em;
+      max-width: 300px;
+      margin: 1em auto;
+      border-radius: 8px;
+    }
+    #user-info {
+      margin-bottom: 1em;
+      font-weight: bold;
+    }
   </style>
-
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js"></script>
 </head>
 <body>
   <h1>⏳ Study Timer</h1>
 
   <!-- Login Section -->
-  <div id="login">
+  <div id="login" class="auth-box">
     <h2>Login</h2>
     <input id="email" type="email" placeholder="Email"><br>
     <input id="password" type="password" placeholder="Password"><br>
@@ -27,7 +49,7 @@
   </div>
 
   <!-- Registration Section -->
-  <div id="register" style="display:none;">
+  <div id="register" class="auth-box" style="display:none;">
     <h2>Register</h2>
     <input id="reg-email" type="email" placeholder="Email"><br>
     <input id="reg-password" type="password" placeholder="Password"><br>
@@ -35,11 +57,12 @@
     <p>Already registered? <button onclick="showLogin()">Back to Login</button></p>
   </div>
 
-  <!-- Timer App -->
+  <!-- Timer App Section -->
   <div id="app" style="display:none;">
+    <div id="user-info">Welcome, <span id="user-email"></span> 👋 <button onclick="logout()">Logout</button></div>
     <div id="timer">00:00:00</div>
     <button onclick="startTimer()">Start</button>
-    <button onclick="stopTimer()">Stop</button>
+    <button onclick="stopTimer()">Stop & Save</button>
     <button onclick="resetTimer()">Reset</button>
 
     <div id="history">
@@ -48,8 +71,12 @@
     </div>
   </div>
 
-  <script>
-    // 🔧 Replace with your Firebase config
+  <!-- Firebase Modular SDK Scripts -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+
     const firebaseConfig = {
     apiKey: "AIzaSyDIhykRWILcAf_8d1EBaY85ktt7cQrRzMQ",
     authDomain: "yuvrajtimer.firebaseapp.com",
@@ -58,40 +85,51 @@
     messagingSenderId: "680357794474",
     appId: "1:680357794474:web:91e3bcae4d84e7a1fe36d3"
     };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
     let userId;
     let timerInterval;
     let seconds = 0;
 
-    function login() {
+    // 🔐 Auth Functions
+    async function login() {
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
-      firebase.auth().signInWithEmailAndPassword(email, password)
-        .then(user => {
-          userId = user.user.uid;
-          showApp();
-          getHistory();
-        })
-        .catch(err => {
-          alert("Login failed: " + err.message);
-        });
+      try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        userId = userCredential.user.uid;
+        document.getElementById("user-email").textContent = userCredential.user.email;
+        showApp();
+        getHistory();
+      } catch (error) {
+        alert("Login failed: " + error.message);
+      }
     }
 
-    function register() {
+    async function register() {
       const email = document.getElementById("reg-email").value;
       const password = document.getElementById("reg-password").value;
-      firebase.auth().createUserWithEmailAndPassword(email, password)
-        .then(user => {
-          alert("✅ Registered! You can now log in.");
-          showLogin();
-        })
-        .catch(err => {
-          alert("Registration failed: " + err.message);
-        });
+      try {
+        await createUserWithEmailAndPassword(auth, email, password);
+        alert("✅ Registered! You can now log in.");
+        showLogin();
+      } catch (error) {
+        alert("Registration failed: " + error.message);
+      }
     }
 
+    function logout() {
+      signOut(auth).then(() => {
+        location.reload();
+      }).catch(error => {
+        alert("Logout error: " + error.message);
+      });
+    }
+
+    // 👀 UI Toggle Functions
     function showRegister() {
       document.getElementById("login").style.display = "none";
       document.getElementById("register").style.display = "block";
@@ -108,6 +146,7 @@
       document.getElementById("app").style.display = "block";
     }
 
+    // ⏱️ Timer Functions
     function startTimer() {
       if (!timerInterval) {
         timerInterval = setInterval(() => {
@@ -121,13 +160,18 @@
       clearInterval(timerInterval);
       timerInterval = null;
       const duration = formatTime(seconds);
-      saveSession(duration);
+      if (seconds > 0) {
+        saveSession(duration);
+      }
     }
 
     function resetTimer() {
-      stopTimer();
-      seconds = 0;
-      updateDisplay();
+      if (!timerInterval) {
+        seconds = 0;
+        updateDisplay();
+      } else {
+        alert("⏸️ Stop the timer before resetting.");
+      }
     }
 
     function updateDisplay() {
@@ -141,18 +185,22 @@
       return `${h}:${m}:${s}`;
     }
 
+    // 📋 Session Save & History
     async function saveSession(duration) {
-      await db.collection("users").doc(userId).collection("sessions").add({
+      await addDoc(collection(db, "users", userId, "sessions"), {
         duration,
         timestamp: new Date().toISOString(),
         device: navigator.userAgent
       });
+      seconds = 0;
+      updateDisplay();
       getHistory();
     }
 
     async function getHistory() {
-      const snapshot = await db.collection("users").doc(userId).collection("sessions")
-        .orderBy("timestamp", "desc").get();
+      const sessionRef = collection(db, "users", userId, "sessions");
+      const q = query(sessionRef, orderBy("timestamp", "desc"));
+      const snapshot = await getDocs(q);
       const list = document.getElementById("sessionList");
       list.innerHTML = "";
       snapshot.forEach(doc => {
@@ -162,6 +210,16 @@
         list.appendChild(li);
       });
     }
+
+    // 🌐 Make functions accessible to buttons
+    window.login = login;
+    window.register = register;
+    window.logout = logout;
+    window.showRegister = showRegister;
+    window.showLogin = showLogin;
+    window.startTimer = startTimer;
+    window.stopTimer = stopTimer;
+    window.resetTimer = resetTimer;
   </script>
 </body>
 </html>
