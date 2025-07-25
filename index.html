@@ -1,26 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>My Timer Tracker</title>
+  <title>Study Timer</title>
   <style>
-    body {
-      font-family: sans-serif;
-      text-align: center;
-      margin: 2em;
-    }
-    #timer {
-      font-size: 3em;
-      margin-bottom: 1em;
-    }
-    button {
-      font-size: 1.2em;
-      margin: 0.5em;
-      padding: 0.5em 1em;
-    }
-    #history {
-      margin-top: 2em;
-      text-align: left;
-    }
+    body { font-family: sans-serif; text-align: center; margin: 2em; }
+    #timer { font-size: 3em; margin: 1em 0; }
+    button, input { font-size: 1em; margin: 0.5em; padding: 0.4em 1em; }
+    #history { margin-top: 2em; text-align: left; max-width: 400px; margin: 2em auto; }
   </style>
 
   <!-- Firebase SDKs -->
@@ -29,20 +15,29 @@
   <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js"></script>
 </head>
 <body>
+  <h1>⏳ Study Timer</h1>
 
-  <h1>⏳ My Timer Tracker</h1>
-  <div id="timer">00:00:00</div>
-  <button onclick="startTimer()">Start</button>
-  <button onclick="stopTimer()">Stop</button>
-  <button onclick="resetTimer()">Reset</button>
+  <div id="login">
+    <h2>Login</h2>
+    <input id="email" type="email" placeholder="Email"><br>
+    <input id="password" type="password" placeholder="Password"><br>
+    <button onclick="login()">Login</button>
+  </div>
 
-  <div id="history">
-    <h2>📋 Your History</h2>
-    <ul id="sessionList"></ul>
+  <div id="app" style="display:none;">
+    <div id="timer">00:00:00</div>
+    <button onclick="startTimer()">Start</button>
+    <button onclick="stopTimer()">Stop</button>
+    <button onclick="resetTimer()">Reset</button>
+
+    <div id="history">
+      <h2>📋 Your History</h2>
+      <ul id="sessionList"></ul>
+    </div>
   </div>
 
   <script>
-    // Your Firebase Config (get this from Firebase Console)
+    // 🔧 Paste your Firebase config here
     const firebaseConfig = {
       apiKey: "AIzaSyDIhykRWILcAf_8d1EBaY85ktt7cQrRzMQ",
       authDomain: "yuvrajtimer.firebaseapp.com",
@@ -54,17 +49,25 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // Globals
+    let userId;
     let timerInterval;
     let seconds = 0;
-    let userId;
 
-    // Auth
-    firebase.auth().signInAnonymously().then(() => {
-      userId = firebase.auth().currentUser.uid;
-      console.log("Signed in as:", userId);
-      getHistory(); // Fetch sessions
-    });
+    function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      firebase.auth().signInWithEmailAndPassword(email, password)
+        .then(user => {
+          userId = user.user.uid;
+          document.getElementById("login").style.display = "none";
+          document.getElementById("app").style.display = "block";
+          getHistory();
+        })
+        .catch(err => {
+          alert("Login failed: " + err.message);
+        });
+    }
 
     function startTimer() {
       if (!timerInterval) {
@@ -105,7 +108,7 @@
         timestamp: new Date().toISOString(),
         device: navigator.userAgent
       });
-      getHistory(); // Refresh session list
+      getHistory();
     }
 
     async function getHistory() {
